@@ -36,6 +36,16 @@ dependencies:
 
   # Utilities
   uuid: ^4.5.1
+  image_picker: ^1.2.1
+  record: ^6.1.2
+  audioplayers: ^6.5.1
+  path_provider: ^2.1.5
+  permission_handler: ^12.0.1
+  emoji_picker_flutter: ^4.0.0
+  flutter_iconpicker_plus: ^3.0.0
+
+dependency_overrides:
+  font_awesome_flutter: 10.6.0
 
 dev_dependencies:
   flutter_test:
