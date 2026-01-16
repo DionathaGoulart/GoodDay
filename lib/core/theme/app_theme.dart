@@ -2,98 +2,103 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Cores principais
-  static const Color primaryColor = Color(0xFF6C63FF);
-  static const Color secondaryColor = Color(0xFF2ECC71);
-  static const Color errorColor = Color(0xFFE74C3C);
+  // --- Spotify Dark Base ---
+  static const Color background = Color(0xFF121212);
+  static const Color surface = Color(0xFF282828);
+  static const Color onSurface = Colors.white;
+  static const Color secondaryText = Color(0xFFB3B3B3);
 
-  // --- Normal Mode (Dark Purple/WhatsApp-like) ---
-  static const Color normalPrimary = Color(0xFF6C63FF); // Deep Purple
-  static const Color normalSecondary = Color(0xFF075E54); // WhatsApp Teal-ish accent
-  static const Color normalBackground = Color(0xFF121212); // standard dark bg
-  static const Color normalSurface = Color(0xFF1E1E1E); // slightly lighter for cards
+  // --- Pastel Palette (Accents) ---
+  static const Color pastelGreen = Color(0xFFB9FBC0);
+  static const Color pastelTeal = Color(0xFF98F5E1);
+  static const Color pastelYellow = Color(0xFFFBF8CC);
+  static const Color pastelPink = Color(0xFFFFCFD2);
+  static const Color pastelPurple = Color(0xFFF1C0E8);
+  static const Color pastelBlue = Color(0xFFA2C3FC); // Pastel Blue
+  static const Color pastelOrange = Color(0xFFFFD8B1); // Pastel Orange
+  static const Color pastelIndigo = Color(0xFFC5A3FF); // Pastel Indigo
+  static const Color pastelCyan = Color(0xFFB2F2F2); // Pastel Cyan
+  
+  static const List<Color> pastelColors = [
+    pastelGreen, pastelTeal, pastelYellow, pastelPink, pastelPurple,
+    pastelBlue, pastelOrange, pastelIndigo, pastelCyan,
+  ];
 
-  static ThemeData normalTheme = ThemeData(
-    useMaterial3: true,
-    brightness: Brightness.dark,
-    scaffoldBackgroundColor: normalBackground,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: normalPrimary,
-      primary: normalPrimary,
-      secondary: normalSecondary,
-      surface: normalSurface,
+  // Main Accent
+  static const Color primaryColor = pastelGreen; 
+
+  static ThemeData get theme {
+    return ThemeData(
+      useMaterial3: true,
       brightness: Brightness.dark,
-    ),
-    textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: normalSurface, 
-      foregroundColor: Colors.white,
-      centerTitle: true,
-      elevation: 0,
-    ),
-    cardTheme: CardThemeData(
-      color: normalSurface,
-      elevation: 4,
-      shadowColor: Colors.black.withOpacity(0.4),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-    ),
-    floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: normalPrimary,
-      foregroundColor: Colors.white,
-    ),
-  );
-
-  // --- Minimalist Mode (Dark Manga/Horror - White on Black) ---
-  static ThemeData minimalistTheme = ThemeData(
-    useMaterial3: true,
-    brightness: Brightness.dark,
-    scaffoldBackgroundColor: Colors.black,
-    colorScheme: const ColorScheme(
-      brightness: Brightness.dark,
-      primary: Colors.white,
-      onPrimary: Colors.black,
-      secondary: Colors.white,
-      onSecondary: Colors.black,
-      error: Colors.red,
-      onError: Colors.black,
-      surface: Colors.black,
-      onSurface: Colors.white,
-    ),
-    textTheme: GoogleFonts.crimsonTextTextTheme(ThemeData.dark().textTheme).apply(
-      bodyColor: Colors.white,
-      displayColor: Colors.white,
-    ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.black,
-      foregroundColor: Colors.white,
-      elevation: 0,
-      centerTitle: true,
-      titleTextStyle: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, fontFamily: 'Crimson Text'),
-      iconTheme: IconThemeData(color: Colors.white),
-      shape: Border(bottom: BorderSide(color: Colors.white, width: 2)), // White border
-    ),
-    cardTheme: CardThemeData(
-      elevation: 0,
-      color: Colors.black,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(0),
-        side: const BorderSide(color: Colors.white, width: 2), // White border
+      scaffoldBackgroundColor: background,
+      primaryColor: primaryColor,
+      colorScheme: const ColorScheme(
+        brightness: Brightness.dark,
+        primary: primaryColor,
+        onPrimary: Colors.black, // Dark text on light pastel
+        secondary: pastelTeal,
+        onSecondary: Colors.black,
+        surface: surface,
+        onSurface: onSurface,
+        error: pastelPink,
+        onError: Colors.black,
+        background: background,
+        onBackground: onSurface,
       ),
-    ),
-    floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: Colors.black,
-      foregroundColor: Colors.white,
-      shape: RoundedRectangleBorder(side: BorderSide(color: Colors.white, width: 2)),
-      elevation: 0,
-    ),
-    dividerTheme: const DividerThemeData(color: Colors.white, thickness: 1),
-    checkboxTheme: CheckboxThemeData(
-      checkColor: const MaterialStatePropertyAll(Colors.black),
-      fillColor: const MaterialStatePropertyAll(Colors.white),
-      side: const BorderSide(color: Colors.white, width: 2),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
-    ),
-    iconTheme: const IconThemeData(color: Colors.white),
-    drawerTheme: const DrawerThemeData(backgroundColor: Colors.black),
-  );
+      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).apply(
+        bodyColor: onSurface,
+        displayColor: onSurface,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent, // Modern transparent look
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          color: onSurface,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+        iconTheme: IconThemeData(color: onSurface),
+      ),
+      cardTheme: CardThemeData(
+        color: surface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Color(0xFF000000), // Slightly darker than background for contrast
+        selectedItemColor: primaryColor,
+        unselectedItemColor: secondaryText,
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.black,
+        shape: CircleBorder(),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: surface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        hintStyle: const TextStyle(color: secondaryText),
+        contentPadding: const EdgeInsets.all(16),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        titleTextStyle: const TextStyle(color: onSurface, fontSize: 20, fontWeight: FontWeight.bold),
+        contentTextStyle: const TextStyle(color: secondaryText, fontSize: 16),
+      ),
+      // Custom helpers
+      extensions: const [
+        // You could add custom colors here if needed
+      ],
+    );
+  }
 }
