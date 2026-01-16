@@ -21,11 +21,7 @@ final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
 final categoriesProvider = FutureProvider<List<ActivityCategory>>((ref) async {
   final repo = ref.watch(settingsRepositoryProvider);
   // Ensure defaults exist
-  if (repo.getCategories().isEmpty) { 
-     // We can't await async bootstrap safely in synchronous build without FutureProvider
-     // But here we return list. For simplicity, we assume bootstrap called in main or here.
-     await repo.bootstrapDefaults(); 
-  }
+
   return repo.getCategories();
 });
 

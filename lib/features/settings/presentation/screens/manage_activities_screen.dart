@@ -4,10 +4,11 @@ import 'package:good_day/features/settings/data/models/activity_category_model.d
 import 'package:good_day/features/settings/data/models/activity_item_model.dart';
 import 'package:good_day/features/settings/presentation/providers/settings_provider.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
-import 'package:flutter_iconpicker_plus/flutter_iconpicker.dart';
-import '../../data/services/backup_service.dart';
-import '../../data/services/google_drive_service.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+// ... imports
+// ... imports
+import 'add_activity_group_screen.dart';
+import 'package:good_day/features/settings/presentation/widgets/categorized_icon_picker.dart';
+import 'package:good_day/core/theme/app_theme.dart';
 
 class ManageActivitiesScreen extends ConsumerWidget {
   const ManageActivitiesScreen({super.key});
@@ -17,125 +18,72 @@ class ManageActivitiesScreen extends ConsumerWidget {
     final categoriesAsync = ref.watch(categoriesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Manage Activities')),
+      appBar: AppBar(title: const Text('Gerenciar Atividades')),
       body: categoriesAsync.when(
         data: (categories) {
-          if (categories.isEmpty) {
-            return const Center(child: Text('No categories properly loaded.'));
-          }
+          final hasCategories = categories.isNotEmpty;
+          
           return ListView(
+            padding: const EdgeInsets.symmetric(vertical: 16),
             children: [
-              // Global Settings
-
-// ... imports
-import '../../data/services/google_drive_service.dart';
-
-// ... 
-
-              // Cloud Backup (Google Drive)
-              const Divider(),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Text('Backup & Restore', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-              ),
-              
-              // Google Drive Status
-              Consumer(builder: (context, ref, _) {
-                 // Watch logic: we need to know if signed in. 
-                 // Simple way: check currentUser on service. To make it reactive, we might need a StateNotifier or just use FutureBuilder/Stream?
-                 // Given simple Provider setup, let's use a FutureBuilder or assuming service notifies?
-                 // The service uses google_sign_in stream. We can watch that stream.
-                 final driveService = ref.watch(googleDriveServiceProvider);
-                 
-                 return StreamBuilder(
-                   stream: GoogleSignIn().onCurrentUserChanged, // Hack: accessing static instance or service stream
-                   builder: (context, snapshot) {
-                     final user = snapshot.data; // or driveService.currentUser if initialized
-                     final isSignedIn = user != null;
-
-                     return Column(
-                       children: [
-                          ListTile(
-                            leading: Icon(Icons.add_to_drive, color: isSignedIn ? Colors.blue : Colors.grey),
-                            title: Text(isSignedIn ? 'Connected as ${user.email}' : 'Connect Google Drive'),
-                            subtitle: const Text('Sync backup file to hidden app folder'),
-                            trailing: Switch(
-                              value: isSignedIn,
-                              onChanged: (val) async {
-                                 if (val) {
-                                   await ref.read(backupServiceProvider).connectToDrive(context);
-                                 } else {
-                                   await ref.read(backupServiceProvider).disconnectDrive();
-                                 }
-                              },
+               if (!hasCategories)
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.list_alt, size: 60, color: Colors.grey),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Nenhuma atividade ou escala configurada.',
+                            style: TextStyle(color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            onPressed: () => _navigateToAddGroupScreen(context, ref),
+                            icon: const Icon(Icons.add_circle_outline),
+                            label: const Text('Adicionar grupo ou escala'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                              backgroundColor: AppTheme.primaryColor,
+                              foregroundColor: Colors.black,
                             ),
                           ),
-                          if (isSignedIn) ...[
-                             ListTile(
-                               title: const Text('Backup to Drive now'),
-                               leading: const Icon(Icons.cloud_upload),
-                               onTap: () async {
-                                  await ref.read(backupServiceProvider).backupToDrive(context);
-                               },
-                             ),
-                             ListTile(
-                               title: const Text('Restore from Drive'),
-                               leading: const Icon(Icons.cloud_download),
-                               onTap: () async {
-                                  await ref.read(backupServiceProvider).restoreFromDrive(context);
-                               },
-                             ),
-                          ]
-                       ],
-                     );
-                   }
-                 );
-              }),
+                        ],
+                      ),
+                    ),
+                  )
+               else
+                  ...categories.map((category) => _CategoryTile(category: category)),
 
-              const Divider(),
-              ExpansionTile(
-                title: const Text('Advanced / Manual'),
-                children: [
-                   ListTile(
-                    title: const Text('Check Auto Backup Status'),
-                    leading: const Icon(Icons.settings_backup_restore),
-                    onTap: () async {
-                       await ref.read(backupServiceProvider).openSystemBackupSettings(context);
-                    },
-                  ),
-                  ListTile(
-                    title: const Text('Export JSON File'),
-                    leading: const Icon(Icons.share),
-                    onTap: () async {
-                       await ref.read(backupServiceProvider).exportData(context);
-                    },
-                  ),
-                   ListTile(
-                    title: const Text('Import JSON File'),
-                    leading: const Icon(Icons.file_open),
-                    onTap: () async {
-                       await ref.read(backupServiceProvider).importData(context);
-                    },
-                  ),
-                ],
-              ),
-              // Categories List
-              ...categories.map((category) => _CategoryTile(category: category)),
+               const SizedBox(height: 80), // Fab space
             ],
           );
         },
+
+
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+
+        error: (err, stack) => Center(child: Text('Erro: $err')),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddCategoryDialog(context, ref),
+        onPressed: () => _navigateToAddGroupScreen(context, ref),
         child: const Icon(Icons.add),
       ),
     );
   }
+
+  void _navigateToAddGroupScreen(BuildContext context, WidgetRef ref) async {
+     final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => const AddActivityGroupScreen()));
+     if (result == 'create_group') {
+       _showAddCategoryDialog(context, ref);
+     } else if (result == 'create_scale') {
+       _showAddCategoryDialog(context, ref, title: 'Nova Escala');
+     }
+  }
 }
-
-
 
 // ... (previous imports)
 
@@ -163,26 +111,22 @@ Future<String?> _pickEmoji(BuildContext context) async {
   );
 }
 
-Future<IconData?> _pickIcon(BuildContext context) async {
-  return FlutterIconPicker.showIconPicker(
-    context,
-    iconPackModes: [IconPack.material],
-  );
-}
+
 
 // Dialog Helpers (Top Level)
 
-void _showAddCategoryDialog(BuildContext context, WidgetRef ref) {
+void _showAddCategoryDialog(BuildContext context, WidgetRef ref, {String title = 'Nova Categoria'}) {
     final nameController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) => _CategoryDialog(
-        title: 'New Category',
-        onSave: (name, emoji, iconCode) async {
+        title: title,
+        initialColorValue: AppTheme.pastelColors.first.value,
+        onSave: (name, emoji, iconCode, colorValue) async {
             await ref.read(settingsRepositoryProvider).addCategory(
               name,
               iconCode ?? Icons.category.codePoint, 
-              Colors.blue.value,
+              colorValue,
               emoji: emoji,
             );
             ref.refresh(categoriesProvider);
@@ -195,16 +139,19 @@ void _showEditCategoryDialog(BuildContext context, WidgetRef ref, ActivityCatego
     showDialog(
       context: context,
       builder: (context) => _CategoryDialog(
-        title: 'Edit Category',
+        title: 'Editar Categoria',
         initialName: category.name,
         initialEmoji: category.emoji,
         initialIconCode: category.iconCode,
-        onSave: (name, emoji, iconCode) async {
+        initialColorValue: category.colorValue,
+        onSave: (name, emoji, iconCode, colorValue) async {
             await ref.read(settingsRepositoryProvider).updateCategory(
               category.id,
               name: name,
               iconCode: iconCode,
+              colorValue: colorValue, 
               emoji: emoji,
+              clearEmoji: emoji == null,
             );
             ref.refresh(categoriesProvider);
         },
@@ -216,7 +163,7 @@ void _showAddItemDialog(BuildContext context, WidgetRef ref, String categoryId) 
      showDialog(
       context: context,
       builder: (context) => _ItemDialog(
-        title: 'New Activity Item',
+        title: 'Nova Atividade',
         onSave: (name, emoji, iconCode) async {
              await ref.read(settingsRepositoryProvider).addItem(
                name, 
@@ -234,7 +181,7 @@ void _showEditItemDialog(BuildContext context, WidgetRef ref, ActivityItem item)
     showDialog(
       context: context,
       builder: (context) => _ItemDialog(
-        title: 'Edit Item',
+        title: 'Editar Atividade',
         initialName: item.name,
         initialEmoji: item.emoji,
         initialIconCode: item.iconCode,
@@ -243,7 +190,8 @@ void _showEditItemDialog(BuildContext context, WidgetRef ref, ActivityItem item)
                item.id,
                name: name,
                emoji: emoji,
-               iconCode: iconCode
+               iconCode: iconCode,
+               clearEmoji: emoji == null,
              );
              ref.refresh(itemsProvider(item.categoryId));
         },
@@ -277,7 +225,7 @@ class _CategoryTile extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
              IconButton(
-               icon: const Icon(Icons.edit, color: Colors.blue),
+               icon: const Icon(Icons.edit, color: AppTheme.pastelTeal),
                onPressed: () => _showEditCategoryDialog(context, ref, category),
              ),
           ],
@@ -295,7 +243,7 @@ class _CategoryTile extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.edit, size: 20, color: Colors.blue),
+                        icon: const Icon(Icons.edit, size: 20, color: AppTheme.pastelTeal),
                         onPressed: () => _showEditItemDialog(context, ref, item),
                       ),
                       IconButton(
@@ -310,13 +258,13 @@ class _CategoryTile extends ConsumerWidget {
                 )),
                 ListTile(
                   leading: const Icon(Icons.add),
-                  title: const Text('Add Item'),
+                  title: const Text('Adicionar Atividade'),
                   onTap: () => _showAddItemDialog(context, ref, category.id),
                 ),
               ],
             ),
             loading: () => const Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()),
-            error: (err, stack) => Padding(padding: const EdgeInsets.all(16), child: Text('Error: $err')),
+            error: (err, stack) => Padding(padding: const EdgeInsets.all(16), child: Text('Erro: $err')),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -327,8 +275,8 @@ class _CategoryTile extends ConsumerWidget {
                         await ref.read(settingsRepositoryProvider).deleteCategory(category.id);
                         ref.refresh(categoriesProvider);
                     }, 
-                    icon: const Icon(Icons.delete_forever, color: Colors.red),
-                    label: const Text("Delete Category", style: TextStyle(color: Colors.red)),
+                    icon: const Icon(Icons.delete_forever, color: AppTheme.pastelPink),
+                    label: const Text("Excluir Categoria", style: TextStyle(color: AppTheme.pastelPink)),
                 )
             ),
           )
@@ -345,7 +293,8 @@ class _CategoryDialog extends StatefulWidget {
   final String? initialName;
   final String? initialEmoji;
   final int? initialIconCode;
-  final Function(String name, String? emoji, int? iconCode) onSave;
+  final int? initialColorValue;
+  final Function(String name, String? emoji, int? iconCode, int colorValue) onSave;
 
   const _CategoryDialog({
     required this.title,
@@ -353,6 +302,7 @@ class _CategoryDialog extends StatefulWidget {
     this.initialName,
     this.initialEmoji,
     this.initialIconCode,
+    this.initialColorValue,
   });
 
   @override
@@ -363,6 +313,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
   late TextEditingController _nameController;
   String? _selectedEmoji;
   int? _selectedIconCode;
+  late int _selectedColorValue;
 
   @override
   void initState() {
@@ -370,99 +321,134 @@ class _CategoryDialogState extends State<_CategoryDialog> {
     _nameController = TextEditingController(text: widget.initialName);
     _selectedEmoji = widget.initialEmoji;
     _selectedIconCode = widget.initialIconCode;
+    _selectedColorValue = widget.initialColorValue ?? AppTheme.pastelColors.first.value;
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(widget.title),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(labelText: 'Name'),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              // Emoji Selector
-              Column(
-                children: [
-                  const Text('Emoji', style: TextStyle(fontSize: 12)),
-                  IconButton(
-                    icon: Text(_selectedEmoji ?? '😀', style: const TextStyle(fontSize: 24)),
-                    onPressed: () async {
-                      final emoji = await showModalBottomSheet<String>(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return EmojiPicker(
-                            onEmojiSelected: (category, emoji) {
-                              Navigator.pop(context, emoji.emoji);
-                            },
-                            config: const Config(
-                              height: 300,
-                              viewOrderConfig: ViewOrderConfig(
-                                top: EmojiPickerItem.categoryBar,
-                                middle: EmojiPickerItem.emojiView,
-                                bottom: EmojiPickerItem.searchBar,
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                      if (emoji != null) {
-                        setState(() {
-                             _selectedEmoji = emoji;
-                             _selectedIconCode = null; // Prefer Emoji
-                        });
-                      }
-                    },
-                  ),
-                ],
-              ),
-              const Text('OR'),
-              // Icon Selector
-              Column(
-                children: [
-                  const Text('Icon', style: TextStyle(fontSize: 12)),
-                  IconButton(
-                    icon: Icon(
-                        _selectedIconCode != null 
-                             ? IconData(_selectedIconCode!, fontFamily: 'MaterialIcons') 
-                             : Icons.image, 
-                        size: 24
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(labelText: 'Nome'),
+            ),
+            const SizedBox(height: 24),
+            const Text('Cor', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: AppTheme.pastelColors.map((color) {
+                final isSelected = color.value == _selectedColorValue;
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedColorValue = color.value),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: isSelected ? Border.all(color: Colors.white, width: 3) : null,
+                      boxShadow: isSelected ? [const BoxShadow(color: Colors.black26, blurRadius: 4)] : null,
                     ),
-                    onPressed: () async {
-                       final icon = await FlutterIconPicker.showIconPicker(
-                          context,
-                          iconPackModes: [IconPack.material],
-                       );
-                       if (icon != null) {
-                          setState(() {
-                             _selectedIconCode = icon.codePoint;
-                             _selectedEmoji = null; // Prefer Icon
-                          });
-                       }
-                    },
+                    child: isSelected ? const Icon(Icons.check, size: 16, color: Colors.black) : null,
                   ),
-                ],
-              ),
-            ],
-          ),
-        ],
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+            const Text('Ícone (Emoji ou Ícone)', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Emoji Selector
+                Column(
+                  children: [
+                    const Text('Emoji', style: TextStyle(fontSize: 12)),
+                    IconButton(
+                      icon: Text(_selectedEmoji ?? '😀', style: const TextStyle(fontSize: 24)),
+                      onPressed: () async {
+                        final emoji = await showModalBottomSheet<String>(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return EmojiPicker(
+                              onEmojiSelected: (category, emoji) {
+                                Navigator.pop(context, emoji.emoji);
+                              },
+                              config: const Config(
+                                height: 300,
+                                viewOrderConfig: ViewOrderConfig(
+                                  top: EmojiPickerItem.categoryBar,
+                                  middle: EmojiPickerItem.emojiView,
+                                  bottom: EmojiPickerItem.searchBar,
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                        if (emoji != null) {
+                          setState(() {
+                               _selectedEmoji = emoji;
+                               _selectedIconCode = null; // Prefer Emoji
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                const Text('OU'),
+                // Icon Selector - Simplified to Single Trigger
+                Column(
+                  children: [
+                    const Text('Ícone', style: TextStyle(fontSize: 12)),
+                    IconButton(
+                      icon: Icon(
+                          _selectedIconCode != null 
+                               ? IconData(_selectedIconCode!, fontFamily: 'MaterialIcons') 
+                               : Icons.add_circle_outline, // Default "Add" look if none selected, or Category if prefer 
+                          size: 32,
+                          color: _selectedIconCode != null ? Color(_selectedColorValue) : Colors.grey,
+                      ),
+                      onPressed: () async {
+                         await showModalBottomSheet(
+                           context: context,
+                           isScrollControlled: true,
+                           backgroundColor: Colors.transparent,
+                           builder: (context) => CategorizedIconPicker(
+                             onIconSelected: (icon) {
+                               setState(() {
+                                  _selectedIconCode = icon.codePoint;
+                                  _selectedEmoji = null;
+                               });
+                               Navigator.pop(context);
+                             },
+                           ),
+                         );
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
         TextButton(
           onPressed: () {
             if (_nameController.text.isNotEmpty) {
-              widget.onSave(_nameController.text, _selectedEmoji, _selectedIconCode);
+              widget.onSave(_nameController.text, _selectedEmoji, _selectedIconCode, _selectedColorValue);
               Navigator.pop(context);
             }
           },
-          child: const Text('Save'),
+          child: const Text('Salvar'),
         ),
       ],
     );
@@ -510,7 +496,7 @@ class _ItemDialogState extends State<_ItemDialog> {
         children: [
           TextField(
             controller: _nameController,
-            decoration: const InputDecoration(labelText: 'Name'),
+            decoration: const InputDecoration(labelText: 'Nome'),
           ),
           const SizedBox(height: 16),
           Row(
@@ -550,39 +536,45 @@ class _ItemDialogState extends State<_ItemDialog> {
                   ),
                 ],
               ),
-              const Text('OR'),
-              // Icon Selector
-              Column(
-                children: [
-                  const Text('Icon', style: TextStyle(fontSize: 12)),
-                  IconButton(
-                    icon: Icon(
-                        _selectedIconCode != null 
-                             ? IconData(_selectedIconCode!, fontFamily: 'MaterialIcons') 
-                             : Icons.image, 
-                        size: 24
+                const Text('OU'),
+                // Icon Selector - Simplified
+                Column(
+                  children: [
+                    const Text('Ícone', style: TextStyle(fontSize: 12)),
+                    IconButton(
+                      icon: Icon(
+                          _selectedIconCode != null 
+                               ? IconData(_selectedIconCode!, fontFamily: 'MaterialIcons') 
+                               : Icons.add_circle_outline, 
+                          size: 32,
+                           // Note: ItemDialog doesn't have _selectedColorValue, use primary or white
+                          color: _selectedIconCode != null ? AppTheme.primaryColor : Colors.grey,
+                      ),
+                      onPressed: () async {
+                         await showModalBottomSheet(
+                           context: context,
+                           isScrollControlled: true,
+                           backgroundColor: Colors.transparent,
+                           builder: (context) => CategorizedIconPicker(
+                             onIconSelected: (icon) {
+                               setState(() {
+                                  _selectedIconCode = icon.codePoint;
+                                  _selectedEmoji = null;
+                               });
+                               Navigator.pop(context);
+                             },
+                           ),
+                         );
+                      },
                     ),
-                    onPressed: () async {
-                       final icon = await FlutterIconPicker.showIconPicker(
-                          context,
-                          iconPackModes: [IconPack.material],
-                       );
-                       if (icon != null) {
-                          setState(() {
-                             _selectedIconCode = icon.codePoint;
-                             _selectedEmoji = null;
-                          });
-                       }
-                    },
-                  ),
-                ],
-              ),
+                  ],
+                ),
             ],
           ),
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
         TextButton(
           onPressed: () {
             if (_nameController.text.isNotEmpty) {
@@ -590,7 +582,7 @@ class _ItemDialogState extends State<_ItemDialog> {
               Navigator.pop(context);
             }
           },
-          child: const Text('Save'),
+          child: const Text('Salvar'),
         ),
       ],
     );

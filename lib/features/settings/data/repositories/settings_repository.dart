@@ -16,7 +16,7 @@ class SettingsRepository {
     return _categoryBox.values.toList();
   }
 
-  Future<void> addCategory(String name, int iconCode, int colorValue, {String? emoji}) async {
+  Future<String> addCategory(String name, int iconCode, int colorValue, {String? emoji}) async {
     final id = const Uuid().v4();
     final category = ActivityCategory(
       id: id,
@@ -26,9 +26,10 @@ class SettingsRepository {
       emoji: emoji,
     );
     await _categoryBox.put(id, category);
+    return id;
   }
 
-  Future<void> updateCategory(String id, {String? name, int? iconCode, int? colorValue, String? emoji}) async {
+  Future<void> updateCategory(String id, {String? name, int? iconCode, int? colorValue, String? emoji, bool clearEmoji = false}) async {
     final category = _categoryBox.get(id);
     if (category != null) {
       final updated = ActivityCategory(
@@ -36,7 +37,7 @@ class SettingsRepository {
         name: name ?? category.name,
         iconCode: iconCode ?? category.iconCode,
         colorValue: colorValue ?? category.colorValue,
-        emoji: emoji ?? category.emoji,
+        emoji: clearEmoji ? null : (emoji ?? category.emoji),
       );
       await _categoryBox.put(id, updated);
     }
@@ -68,7 +69,7 @@ class SettingsRepository {
     await _itemBox.put(id, item);
   }
 
-  Future<void> updateItem(String id, {String? name, String? categoryId, int? iconCode, String? emoji}) async {
+  Future<void> updateItem(String id, {String? name, String? categoryId, int? iconCode, String? emoji, bool clearEmoji = false}) async {
     final item = _itemBox.get(id);
     if (item != null) {
       final updated = ActivityItem(
@@ -76,7 +77,7 @@ class SettingsRepository {
         name: name ?? item.name,
         categoryId: categoryId ?? item.categoryId,
         iconCode: iconCode ?? item.iconCode,
-        emoji: emoji ?? item.emoji,
+        emoji: clearEmoji ? null : (emoji ?? item.emoji),
       );
       await _itemBox.put(id, updated);
     }
@@ -103,7 +104,7 @@ class SettingsRepository {
         id: socialId,
         name: 'Social',
         iconCode: Icons.people.codePoint,
-        colorValue: Colors.blue.value,
+        colorValue: 0xFFA2C3FC, // Pastel Blue
       ));
       await addItem('Family', socialId, iconCode: Icons.family_restroom.codePoint);
       await addItem('Friends', socialId, iconCode: Icons.people_outline.codePoint);
@@ -115,7 +116,7 @@ class SettingsRepository {
         id: hobbiesId,
         name: 'Hobbies',
         iconCode: Icons.palette.codePoint,
-        colorValue: Colors.purple.value,
+        colorValue: 0xFFF1C0E8, // Pastel Purple
       ));
       await addItem('Gaming', hobbiesId, iconCode: Icons.videogame_asset.codePoint);
       await addItem('Reading', hobbiesId, iconCode: Icons.book.codePoint);
@@ -127,7 +128,7 @@ class SettingsRepository {
         id: foodId,
         name: 'Food',
         iconCode: Icons.restaurant.codePoint,
-        colorValue: Colors.orange.value,
+        colorValue: 0xFFFFD8B1, // Pastel Orange
       ));
       await addItem('Healthy', foodId, iconCode: Icons.local_dining.codePoint);
       await addItem('Fast Food', foodId, iconCode: Icons.fastfood.codePoint);
@@ -138,7 +139,7 @@ class SettingsRepository {
         id: sleepId,
         name: 'Sleep',
         iconCode: Icons.bed.codePoint,
-        colorValue: Colors.indigo.value,
+        colorValue: 0xFFC5A3FF, // Pastel Indigo
       ));
       await addItem('Early', sleepId, iconCode: Icons.alarm_on.codePoint);
       await addItem('Late', sleepId, iconCode: Icons.nightlife.codePoint);
