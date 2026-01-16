@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:good_day/core/theme/app_theme.dart';
 
 class MoodSelector extends StatelessWidget {
   final String selectedMood;
@@ -11,11 +12,11 @@ class MoodSelector extends StatelessWidget {
   });
 
   final List<Map<String, dynamic>> _moods = const [
-    {'label': 'Rad', 'icon': Icons.sentiment_very_satisfied, 'color': Colors.green},
-    {'label': 'Good', 'icon': Icons.sentiment_satisfied, 'color': Colors.lightGreen},
-    {'label': 'Meh', 'icon': Icons.sentiment_neutral, 'color': Colors.grey},
-    {'label': 'Bad', 'icon': Icons.sentiment_dissatisfied, 'color': Colors.orange},
-    {'label': 'Awful', 'icon': Icons.sentiment_very_dissatisfied, 'color': Colors.red},
+    {'label': 'Feliz', 'icon': Icons.sentiment_very_satisfied, 'color': AppTheme.pastelGreen},
+    {'label': 'Bom', 'icon': Icons.sentiment_satisfied, 'color': AppTheme.pastelBlue},
+    {'label': 'Neutro', 'icon': Icons.sentiment_neutral, 'color': AppTheme.pastelPurple},
+    {'label': 'Triste', 'icon': Icons.sentiment_dissatisfied, 'color': AppTheme.pastelOrange},
+    {'label': 'Terrível', 'icon': Icons.sentiment_very_dissatisfied, 'color': AppTheme.pastelPink},
   ];
 
   @override

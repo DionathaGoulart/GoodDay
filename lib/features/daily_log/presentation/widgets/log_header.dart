@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:good_day/core/theme/app_theme.dart';
 import '../../data/models/daily_log_model.dart';
 
 class LogHeader extends StatelessWidget {
@@ -70,36 +71,48 @@ class LogHeader extends StatelessWidget {
 
   Widget _getMoodIcon(String mood, {double size = 24}) {
     Color iconColor;
-    switch (mood) {
-      case 'Rad':
-        iconColor = Colors.green;
+    final normalizedMood = mood.toLowerCase();
+    
+    switch (normalizedMood) {
+      case 'happy':
+      case 'feliz':
+        iconColor = AppTheme.pastelGreen;
         break;
-      case 'Good':
-        iconColor = Colors.lightGreen;
+      case 'good':
+      case 'bom':
+        iconColor = AppTheme.pastelTeal;
         break;
-      case 'Meh':
-        iconColor = Colors.grey;
+      case 'neutral':
+      case 'neutro':
+        iconColor = AppTheme.pastelYellow;
         break;
-      case 'Bad':
-        iconColor = Colors.orange;
+      case 'sad':
+      case 'triste':
+        iconColor = AppTheme.pastelPink;
         break;
-      case 'Awful':
-        iconColor = Colors.red;
+      case 'terrible':
+      case 'terrível':
+        iconColor = AppTheme.pastelPurple;
         break;
       default:
-        iconColor = Colors.grey;
+        iconColor = AppTheme.secondaryText;
     }
 
-    switch (mood) {
-      case 'Rad':
+    switch (normalizedMood) {
+      case 'happy':
+      case 'feliz':
         return Icon(Icons.sentiment_very_satisfied, color: iconColor, size: size);
-      case 'Good':
+      case 'good':
+      case 'bom':
         return Icon(Icons.sentiment_satisfied, color: iconColor, size: size);
-      case 'Meh':
+      case 'neutral':
+      case 'neutro':
         return Icon(Icons.sentiment_neutral, color: iconColor, size: size);
-      case 'Bad':
+      case 'sad':
+      case 'triste':
         return Icon(Icons.sentiment_dissatisfied, color: iconColor, size: size);
-      case 'Awful':
+      case 'terrible':
+      case 'terrível':
         return Icon(Icons.sentiment_very_dissatisfied, color: iconColor, size: size);
       default:
         return Icon(Icons.help_outline, color: iconColor, size: size);

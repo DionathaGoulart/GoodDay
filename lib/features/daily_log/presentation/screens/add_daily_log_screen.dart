@@ -7,11 +7,13 @@ import 'package:good_day/features/daily_log/data/models/daily_log_model.dart';
 import 'package:good_day/features/settings/data/models/activity_category_model.dart';
 import 'package:good_day/features/settings/data/models/activity_item_model.dart';
 import 'package:good_day/features/settings/presentation/providers/settings_provider.dart';
+import '../../../dashboard/data/services/stats_service.dart';
 import '../providers/daily_log_provider.dart';
 import '../widgets/audio_recorder_widget.dart';
 import '../widgets/audio_player_widget.dart';
 import '../widgets/mood_selector.dart';
 import '../widgets/dynamic_activity_selector.dart';
+import 'package:good_day/core/theme/app_theme.dart';
 
 class AddDailyLogScreen extends ConsumerStatefulWidget {
   final DailyLog? logToEdit;
@@ -25,7 +27,7 @@ class AddDailyLogScreen extends ConsumerStatefulWidget {
 class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
   final _formKey = GlobalKey<FormState>();
   late DateTime _selectedDate;
-  String _mood = 'Happy';
+  String _mood = 'Feliz';
   List<String> _selectedItemIds = [];
   final List<String> _mediaPaths = [];
   final List<String> _audioPaths = []; // NEW
@@ -81,7 +83,7 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao selecionar imagem: $e')));
       }
     }
   }
@@ -96,7 +98,7 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
       }
     } catch (e) {
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error picking video: $e')));
+           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao selecionar vídeo: $e')));
         }
     }
   }
@@ -110,7 +112,7 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text('Take Photo'),
+                title: const Text('Tirar Foto'),
                 onTap: () {
                    Navigator.pop(context);
                    _pickImage(ImageSource.camera);
@@ -118,7 +120,7 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo),
-                title: const Text('Choose Photo'),
+                title: const Text('Escolher Foto'),
                  onTap: () {
                    Navigator.pop(context);
                    _pickImage(ImageSource.gallery);
@@ -126,7 +128,7 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.videocam),
-                title: const Text('Record Video'),
+                title: const Text('Gravar Vídeo'),
                  onTap: () {
                    Navigator.pop(context);
                    _pickVideo(ImageSource.camera);
@@ -134,7 +136,7 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.video_library),
-                title: const Text('Choose Video'),
+                title: const Text('Escolher Vídeo'),
                  onTap: () {
                    Navigator.pop(context);
                    _pickVideo(ImageSource.gallery);
@@ -175,7 +177,7 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
     }
   }
 
-  void _saveLog() {
+  void _saveLog() async {
     if (_formKey.currentState!.validate()) {
       final log = DailyLog(
         id: widget.logToEdit?.id ?? const Uuid().v4(), // Use existing ID if editing
@@ -190,7 +192,18 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
       );
 
       ref.read(dailyLogsControllerProvider.notifier).addLog(log);
-      Navigator.pop(context);
+
+      if (mounted) {
+        // If new log, calculate streak to pass back
+        if (widget.logToEdit == null) {
+           final currentLogs = ref.read(dailyLogsControllerProvider).value ?? [];
+           final updatedLogs = [...currentLogs, log];
+           final streak = StatsService().calculateCurrentStreak(updatedLogs);
+           Navigator.pop(context, streak);
+        } else {
+           Navigator.pop(context, null);
+        }
+      }
     }
   }
 
@@ -199,12 +212,12 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Delete Log?'),
-          content: const Text('Are you sure you want to delete this entry? This action cannot be undone.'),
+          title: const Text('Excluir Registro?'),
+          content: const Text('Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text('Cancelar'),
             ),
             TextButton(
               onPressed: () {
@@ -212,7 +225,7 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
                 Navigator.pop(context); // Close Dialog
                 Navigator.pop(context); // Close Screen
               },
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              child: const Text('Excluir', style: TextStyle(color: Colors.red)),
             ),
           ],
         ),
@@ -224,13 +237,12 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.logToEdit != null ? 'Edit Entry' : 'New Entry'),
+        title: Text(widget.logToEdit != null ? 'Editar Registro' : 'Novo Registro'),
         actions: [
-          if (widget.logToEdit != null)
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: _deleteLog,
-            ),
+          TextButton(
+            onPressed: _saveLog,
+            child: const Text('Salvar', style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
+          ),
         ],
       ),
       body: Form(
@@ -241,7 +253,7 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
             // Date Picker Row
             Row(
               children: [
-                const Text('Date:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const Text('Data:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 const SizedBox(width: 8),
                 TextButton.icon(
                   onPressed: _pickDate,
@@ -252,7 +264,7 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
             ),
             const SizedBox(height: 16),
             
-            const Text('How are you?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Como você está?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             MoodSelector(
               selectedMood: _mood,
@@ -260,7 +272,7 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
             ),
             const SizedBox(height: 24),
 
-            const Text('What have you been up to?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('O que você tem feito?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             if (_groupedItems.isEmpty)
               const Center(child: CircularProgressIndicator())
@@ -278,7 +290,7 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
             const SizedBox(height: 24),
             
             // Media Section
-            const Text('Media', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Mídia', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             SizedBox(
               height: 100,
@@ -292,16 +304,16 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
-                        color: Colors.grey[200],
+                        color: AppTheme.surface,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[400]!),
+                        // border: Border.all(color: Colors.grey[400]!),
                       ),
                       child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.add_a_photo, color: Colors.grey),
                           SizedBox(height: 4),
-                          Text('Add Media', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                          Text('Adicionar', style: TextStyle(fontSize: 12, color: Colors.grey)),
                         ],
                       ),
                     ),
@@ -350,7 +362,7 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
             const SizedBox(height: 24),
 
             // Audio Section
-            const Text('Audio', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Áudio', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             AudioRecorderWidget(
               onRecordingComplete: (path) {
@@ -386,21 +398,22 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
             TextFormField(
               controller: _notesController,
               decoration: const InputDecoration(
-                labelText: 'Notes & Thoughts',
+                labelText: 'Notas e Pensamentos',
                 prefixIcon: Icon(Icons.note),
-                border: OutlineInputBorder(),
+                border: InputBorder.none,
               ),
               maxLines: 3,
             ),
             const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: _saveLog,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                textStyle: const TextStyle(fontSize: 18),
+            if (widget.logToEdit != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 32.0),
+                child: TextButton.icon(
+                  onPressed: _deleteLog,
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  label: const Text('Excluir Registro', style: TextStyle(color: Colors.red)),
+                ),
               ),
-              child: const Text('Save Entry'),
-            ),
           ],
         ),
       ),

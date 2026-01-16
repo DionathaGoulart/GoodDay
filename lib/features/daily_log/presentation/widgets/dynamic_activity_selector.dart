@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:good_day/features/settings/data/models/activity_category_model.dart';
 import 'package:good_day/features/settings/data/models/activity_item_model.dart';
+import 'package:good_day/core/theme/app_theme.dart';
 
 class DynamicActivitySelector extends StatelessWidget {
   final Map<ActivityCategory, List<ActivityItem>> categoryItems;
@@ -37,7 +38,7 @@ class DynamicActivitySelector extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              padding: const EdgeInsets.only(top: 24.0, bottom: 12.0),
               child: Row(
                 children: [
                   if (category.emoji != null && category.emoji!.isNotEmpty)
@@ -47,7 +48,7 @@ class DynamicActivitySelector extends StatelessWidget {
                          color: Color(category.colorValue), size: 18),
                   const SizedBox(width: 8),
                   Text(category.name, 
-                       style: TextStyle(color: Color(category.colorValue), fontWeight: FontWeight.bold)),
+                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                 ],
               ),
             ),
@@ -73,37 +74,41 @@ class DynamicActivitySelector extends StatelessWidget {
                     );
                 }
 
-                return FilterChip(
-                  label: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      iconWidget,
-                      const SizedBox(height: 4),
-                      Text(
-                        item.name,
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.grey[700],
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  selected: isSelected,
-                  onSelected: (_) => _toggleItem(item.id),
-                  showCheckmark: false,
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                  backgroundColor: Colors.grey[200],
-                  selectedColor: Color(category.colorValue),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(
-                      color: isSelected ? Colors.transparent : Colors.grey[300]!,
+                return GestureDetector(
+                  onTap: () => _toggleItem(item.id),
+                  child: Container(
+                    width: 70, 
+                    height: 70,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? Color(category.colorValue) : AppTheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: isSelected ? null : Border.all(color: Colors.grey[800]!),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        iconWidget,
+                         const SizedBox(height: 6),
+                         Text(
+                           item.name, 
+                           textAlign: TextAlign.center,
+                           style: TextStyle(
+                             color: isSelected ? Colors.black : Colors.grey[400],
+                             fontSize: 11,
+                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
+                           ),
+                           maxLines: 2,
+                           overflow: TextOverflow.ellipsis,
+                         )
+                      ],
                     ),
                   ),
                 );
               }).toList(),
             ),
-            const Divider(),
+            const SizedBox(height: 24),
           ],
         );
       }).toList(),
