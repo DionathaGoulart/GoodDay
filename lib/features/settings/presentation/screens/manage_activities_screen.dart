@@ -5,6 +5,9 @@ import 'package:good_day/features/settings/data/models/activity_item_model.dart'
 import 'package:good_day/features/settings/presentation/providers/settings_provider.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter_iconpicker_plus/flutter_iconpicker.dart';
+import '../../data/services/backup_service.dart';
+import '../../data/services/google_drive_service.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class ManageActivitiesScreen extends ConsumerWidget {
   const ManageActivitiesScreen({super.key});
@@ -23,43 +26,99 @@ class ManageActivitiesScreen extends ConsumerWidget {
           return ListView(
             children: [
               // Global Settings
+
+// ... imports
+import '../../data/services/google_drive_service.dart';
+
+// ... 
+
+              // Cloud Backup (Google Drive)
+              const Divider(),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Text('Backup & Restore', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+              ),
+              
+              // Google Drive Status
               Consumer(builder: (context, ref, _) {
-                final isMinimalist = ref.watch(minimalistModeProvider);
-                return SwitchListTile(
-                  title: const Text('Minimalist Mode'),
-                  subtitle: const Text('Show simple text list instead of icons'),
-                  value: isMinimalist,
-                  onChanged: (val) {
-                    ref.read(settingsRepositoryProvider).contentMinimalistMode(val);
-                    ref.read(minimalistModeProvider.notifier).state = val;
-                  },
-                );
+                 // Watch logic: we need to know if signed in. 
+                 // Simple way: check currentUser on service. To make it reactive, we might need a StateNotifier or just use FutureBuilder/Stream?
+                 // Given simple Provider setup, let's use a FutureBuilder or assuming service notifies?
+                 // The service uses google_sign_in stream. We can watch that stream.
+                 final driveService = ref.watch(googleDriveServiceProvider);
+                 
+                 return StreamBuilder(
+                   stream: GoogleSignIn().onCurrentUserChanged, // Hack: accessing static instance or service stream
+                   builder: (context, snapshot) {
+                     final user = snapshot.data; // or driveService.currentUser if initialized
+                     final isSignedIn = user != null;
+
+                     return Column(
+                       children: [
+                          ListTile(
+                            leading: Icon(Icons.add_to_drive, color: isSignedIn ? Colors.blue : Colors.grey),
+                            title: Text(isSignedIn ? 'Connected as ${user.email}' : 'Connect Google Drive'),
+                            subtitle: const Text('Sync backup file to hidden app folder'),
+                            trailing: Switch(
+                              value: isSignedIn,
+                              onChanged: (val) async {
+                                 if (val) {
+                                   await ref.read(backupServiceProvider).connectToDrive(context);
+                                 } else {
+                                   await ref.read(backupServiceProvider).disconnectDrive();
+                                 }
+                              },
+                            ),
+                          ),
+                          if (isSignedIn) ...[
+                             ListTile(
+                               title: const Text('Backup to Drive now'),
+                               leading: const Icon(Icons.cloud_upload),
+                               onTap: () async {
+                                  await ref.read(backupServiceProvider).backupToDrive(context);
+                               },
+                             ),
+                             ListTile(
+                               title: const Text('Restore from Drive'),
+                               leading: const Icon(Icons.cloud_download),
+                               onTap: () async {
+                                  await ref.read(backupServiceProvider).restoreFromDrive(context);
+                               },
+                             ),
+                          ]
+                       ],
+                     );
+                   }
+                 );
               }),
+
               const Divider(),
-              // Backup/Restore
-              ListTile(
-                title: const Text('Backup Data'),
-                subtitle: const Text('Export settings to file'),
-                leading: const Icon(Icons.download),
-                onTap: () async {
-                   // In a real app we'd save to file. For strict env, we might just show JSON/Clipboard or use path_provider.
-                   // Let's print to console or show dialog with JSON for now as file pickers are complex in this headless env.
-                   // Actually, I can use file_picker/share_plus but I don't have them installed. 
-                   // Given constraints, I'll simulate it by generating a file in Documents.
-                   final data = ref.read(settingsRepositoryProvider).exportData();
-                   // Just show a snackbar for now
-                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Backup functionality requires additional plugins (share_plus/path_provider). implemented logic ready.')));
-                },
+              ExpansionTile(
+                title: const Text('Advanced / Manual'),
+                children: [
+                   ListTile(
+                    title: const Text('Check Auto Backup Status'),
+                    leading: const Icon(Icons.settings_backup_restore),
+                    onTap: () async {
+                       await ref.read(backupServiceProvider).openSystemBackupSettings(context);
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('Export JSON File'),
+                    leading: const Icon(Icons.share),
+                    onTap: () async {
+                       await ref.read(backupServiceProvider).exportData(context);
+                    },
+                  ),
+                   ListTile(
+                    title: const Text('Import JSON File'),
+                    leading: const Icon(Icons.file_open),
+                    onTap: () async {
+                       await ref.read(backupServiceProvider).importData(context);
+                    },
+                  ),
+                ],
               ),
-               ListTile(
-                title: const Text('Restore Data'),
-                subtitle: const Text('Import settings from file'),
-                leading: const Icon(Icons.upload),
-                onTap: () {
-                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Restore functionality requires additional plugins (file_picker). implemented logic ready.')));
-                },
-              ),
-              const Divider(),
               // Categories List
               ...categories.map((category) => _CategoryTile(category: category)),
             ],
