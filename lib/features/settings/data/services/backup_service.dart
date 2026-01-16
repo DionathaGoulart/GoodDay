@@ -12,15 +12,8 @@ import 'package:good_day/features/daily_log/data/models/daily_log_model.dart';
 import 'package:good_day/features/settings/data/models/activity_category_model.dart';
 import 'package:good_day/features/settings/data/models/activity_item_model.dart';
 
-// ... imports
-import 'google_drive_service.dart';
-
 class BackupService {
-  final GoogleDriveService _driveService;
-
-  BackupService(this._driveService);
-
-  // ... openSystemBackupSettings (keep existing)
+  BackupService();
 
   // System Backup Check ...
   Future<void> openSystemBackupSettings(BuildContext context) async {
@@ -83,60 +76,6 @@ class BackupService {
     }
   }
 
-  // --- Google Drive Logic ---
-  
-  Future<void> connectToDrive(BuildContext context) async {
-      await _driveService.signIn();
-  }
-  
-  Future<void> disconnectDrive() async {
-      await _driveService.signOut();
-  }
-
-  Future<void> backupToDrive(BuildContext context) async {
-    try {
-      if (_driveService.currentUser == null) await _driveService.signIn();
-      if (_driveService.currentUser == null) return; // Users cancelled
-
-      final file = await _generateBackupFile();
-      await _driveService.uploadBackup(file);
-      
-      if (context.mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Backup uploaded to Google Drive!')));
-      }
-    } catch (e) {
-       if (context.mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Drive Backup Failed: $e')));
-       }
-    }
-  }
-
-  Future<void> restoreFromDrive(BuildContext context) async {
-    try {
-      if (_driveService.currentUser == null) await _driveService.signIn();
-      if (_driveService.currentUser == null) return;
-
-      final metadata = await _driveService.getLatestBackupMetadata();
-      if (metadata == null) {
-          if (context.mounted) {
-             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No backup found in Drive app folder.')));
-          }
-          return;
-      }
-
-      final directory = await getTemporaryDirectory();
-      final targetFile = File('${directory.path}/restored_backup.json');
-      await _driveService.downloadBackup(metadata.id!, targetFile);
-      
-      await _restoreFromFile(context, targetFile);
-
-    } catch (e) {
-       if (context.mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Drive Restore Failed: $e')));
-       }
-    }
-  }
-  
   // Helpers
   
   Future<File> _generateBackupFile() async {
@@ -277,11 +216,6 @@ class BackupService {
   }
 }
 
-final googleDriveServiceProvider = Provider<GoogleDriveService>((ref) {
-  return GoogleDriveService();
-});
-
 final backupServiceProvider = Provider<BackupService>((ref) {
-  final driveService = ref.watch(googleDriveServiceProvider);
-  return BackupService(driveService);
+  return BackupService();
 });
