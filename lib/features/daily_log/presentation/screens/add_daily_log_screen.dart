@@ -80,11 +80,70 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
         });
       }
     } catch (e) {
-      // Handle error
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
       }
     }
+  }
+
+  Future<void> _pickVideo(ImageSource source) async {
+    try {
+      final XFile? video = await _picker.pickVideo(source: source);
+      if (video != null) {
+        setState(() {
+          _mediaPaths.add(video.path);
+        });
+      }
+    } catch (e) {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error picking video: $e')));
+        }
+    }
+  }
+
+  void _showMediaPickerOptions() {
+      showModalBottomSheet(
+        context: context,
+        builder: (context) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take Photo'),
+                onTap: () {
+                   Navigator.pop(context);
+                   _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo),
+                title: const Text('Choose Photo'),
+                 onTap: () {
+                   Navigator.pop(context);
+                   _pickImage(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.videocam),
+                title: const Text('Record Video'),
+                 onTap: () {
+                   Navigator.pop(context);
+                   _pickVideo(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.video_library),
+                title: const Text('Choose Video'),
+                 onTap: () {
+                   Navigator.pop(context);
+                   _pickVideo(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      );
   }
 
   void _removeMedia(int index) {
@@ -208,12 +267,10 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
             else
               Consumer(
                 builder: (context, ref, _) {
-                  final isMinimalist = ref.watch(minimalistModeProvider);
                   return DynamicActivitySelector(
                     categoryItems: _groupedItems,
                     selectedItemIds: _selectedItemIds,
                     onChanged: (val) => setState(() => _selectedItemIds = val),
-                    isMinimalist: isMinimalist,
                   );
                 }
               ),
@@ -230,7 +287,7 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
                 children: [
                   // Add Button
                   GestureDetector(
-                    onTap: () => _pickImage(ImageSource.gallery),
+                    onTap: () => _showMediaPickerOptions(),
                     child: Container(
                       width: 100,
                       height: 100,
@@ -244,7 +301,7 @@ class _AddDailyLogScreenState extends ConsumerState<AddDailyLogScreen> {
                         children: [
                           Icon(Icons.add_a_photo, color: Colors.grey),
                           SizedBox(height: 4),
-                          Text('Add Photo', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                          Text('Add Media', style: TextStyle(fontSize: 12, color: Colors.grey)),
                         ],
                       ),
                     ),
