@@ -14,7 +14,6 @@ final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
   return SettingsRepository(
     ref.watch(categoryBoxProvider),
     ref.watch(itemBoxProvider),
-    ref.watch(settingsBoxProvider),
   );
 });
 
@@ -36,8 +35,4 @@ final itemsProvider = FutureProvider.family<List<ActivityItem>, String>((ref, ca
   return repo.getItems(categoryId);
 });
 
-// Minimalist Mode Provider
-final minimalistModeProvider = StateProvider<bool>((ref) {
-  final repo = ref.read(settingsRepositoryProvider);
-  return repo.isMinimalistMode;
-});
+

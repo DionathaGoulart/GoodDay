@@ -7,9 +7,9 @@ import '../models/activity_item_model.dart';
 class SettingsRepository {
   final Box<ActivityCategory> _categoryBox;
   final Box<ActivityItem> _itemBox;
-  final Box _settingsBox;
 
-  SettingsRepository(this._categoryBox, this._itemBox, this._settingsBox);
+
+  SettingsRepository(this._categoryBox, this._itemBox);
 
   // --- Categories ---
   List<ActivityCategory> getCategories() {
@@ -145,12 +145,7 @@ class SettingsRepository {
     }
   }
 
-  // --- Settings ---
-  bool get isMinimalistMode => _settingsBox.get('isMinimalistMode', defaultValue: false);
-  
-  Future<void> contentMinimalistMode(bool value) async {
-    await _settingsBox.put('isMinimalistMode', value);
-  }
+
 
   // --- Backup ---
   Map<String, dynamic> exportData() {
